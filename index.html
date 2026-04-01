@@ -49,6 +49,12 @@
 
   .footer { text-align: center; padding: 28px 0 0; font-size: 11px; color: #bbb; }
 
+  .scope-divider { display: flex; align-items: center; gap: 8px; padding: 18px 4px 8px; font-size: 14px; font-weight: 700; color: #555; border-bottom: 2px solid #e5e7eb; margin-bottom: 10px; margin-top: 14px; }
+  .scope-divider:first-child { margin-top: 0; }
+  .scope-divider-badge { display: inline-block; padding: 3px 13px; border-radius: 10px; font-size: 12px; font-weight: 700; color: #fff; }
+  .scope-divider-badge.교내 { background: #059669; }
+  .scope-divider-badge.교외 { background: #D97706; }
+
   @media (max-width: 600px) {
     .wrap { padding: 20px 14px 32px; }
     h1 { font-size: 20px; }
@@ -99,12 +105,7 @@ function render() {
 
   document.getElementById("hint").textContent = `활동 건수가 많은 순으로 정렬 — 숫자가 클수록 해당 직무 학생들이 많이 선택한 활동입니다.`;
 
-  let all = [];
-  if (scope==="all"||scope==="교내") all = all.concat((d.scopes["교내"]||[]).map(a=>({...a,scope:"교내"})));
-  if (scope==="all"||scope==="교외") all = all.concat((d.scopes["교외"]||[]).map(a=>({...a,scope:"교외"})));
-  all.sort((a,b)=>b.count-a.count);
-
-  document.getElementById("cards").innerHTML = all.map(a => `
+  const renderCards = (items) => items.map(a => `
     <div class="card">
       <div class="card-top">
         <div class="card-left">
@@ -118,6 +119,18 @@ function render() {
       <div class="skills">${a.skills.map(s=>`<span class="skill-tag">${s}</span>`).join("")}</div>
     </div>
   `).join("");
+
+  if (scope === "all") {
+    const 교내 = (d.scopes["교내"]||[]).map(a=>({...a,scope:"교내"})).sort((a,b)=>b.count-a.count);
+    const 교외 = (d.scopes["교외"]||[]).map(a=>({...a,scope:"교외"})).sort((a,b)=>b.count-a.count);
+    let html = "";
+    if (교내.length) html += `<div class="scope-divider"><span class="scope-divider-badge 교내">교내</span> 활동 ${교내.reduce((s,a)=>s+a.count,0)}건</div>` + renderCards(교내);
+    if (교외.length) html += `<div class="scope-divider"><span class="scope-divider-badge 교외">교외</span> 활동 ${교외.reduce((s,a)=>s+a.count,0)}건</div>` + renderCards(교외);
+    document.getElementById("cards").innerHTML = html;
+  } else {
+    const items = (d.scopes[scope]||[]).map(a=>({...a,scope})).sort((a,b)=>b.count-a.count);
+    document.getElementById("cards").innerHTML = renderCards(items);
+  }
 }
 
 function selectJob(j) { selected = j; scope = "all"; render(); }
